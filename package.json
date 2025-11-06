@@ -1,0 +1,22 @@
+{
+  "name": "discogs-mass-export",
+  "version": "1.0.0",
+  "description": "Personal CLI tool to mass export Discogs marketplace listings by style",
+  "type": "commonjs",
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "tsc",
+    "export:style": "ts-node src/cli.ts"
+  },
+  "keywords": ["discogs", "marketplace", "export", "cli"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "discogs-marketplace-api-nodejs": "^1.14.4"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  }
+}

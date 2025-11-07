@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FilterSidebar } from './components/FilterSidebar';
 import { ProgressBar } from './components/ProgressBar';
 import { ResultsTable } from './components/ResultsTable';
@@ -12,6 +12,15 @@ function App() {
   const [progress, setProgress] = useState<ProgressUpdate | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   const handleSearch = async (options: SearchOptions) => {
     // Clear previous results
@@ -192,6 +201,8 @@ function App() {
           onExportCSV={handleExportCSV} 
           showSidebar={showSidebar}
           onToggleSidebar={() => setShowSidebar(!showSidebar)}
+          darkMode={darkMode}
+          onToggleDarkMode={() => setDarkMode(!darkMode)}
         />
       </div>
     </div>

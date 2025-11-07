@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EventSource API Test</title>
+</head>
+<body>
+    <h1>Discogs API Stream Test - EventSource</h1>
+    <button onclick="testStream()">Test Stream with EventSource</button>
+    <div id="output" style="margin-top: 20px; font-family: monospace; white-space: pre;"></div>
+
+    <script>
+        let eventSource = null;
+
+        function testStream() {
+            const output = document.getElementById('output');
+            output.textContent = 'Starting EventSource connection...\n';
+
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            // EventSource doesn't support POST, so we'll need to use GET or a different approach
+            // For now, let's test with a simple connection
+            eventSource = new EventSource('http://localhost:3001/api/search');
+
+            eventSource.onopen = () => {
+                output.textContent += 'Connection opened!\n';
+            };
+
+            eventSource.onmessage = (event) => {
+                output.textContent += `Message received: ${event.data}\n`;
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'data') {
+                        output.textContent += `Got listing: ${data.listing.title}\n`;
+                    } else if (data.type === 'progress') {
+                        output.textContent += `Progress: ${data.itemsLoaded} items\n`;
+                    } else if (data.type === 'complete') {
+                        output.textContent += 'Complete!\n';
+                        eventSource.close();
+                    }
+                } catch (e) {
+                    output.textContent += `Parse error: ${e}\n`;
+                }
+            };
+
+            eventSource.onerror = (error) => {
+                output.textContent += `ERROR: ${JSON.stringify(error)}\n`;
+                output.textContent += `ReadyState: ${eventSource.readyState}\n`;
+                eventSource.close();
+            };
+        }
+    </script>
+</body>
+</html>

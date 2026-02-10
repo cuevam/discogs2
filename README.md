@@ -138,3 +138,16 @@ npm run export:style -- --style <style> [options]
 ## License
 
 MIT
+
+
+# Start server
+- 
+cd ~/dev/discogs2 
+./start.sh
+
+# Stop server
+- - 
+cd ~/dev/discogs2 
+./stop.sh
+
+

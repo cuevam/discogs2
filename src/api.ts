@@ -24,12 +24,72 @@ app.post('/api/search', (req, res) => {
   let totalItemsSent = 0;
   let clientDisconnected = false;
   
+  // Input validation
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Request body must be a valid object' });
+  }
+  
+  const body = req.body;
+  
+  // Validate individual fields
+  if (body.styles !== undefined) {
+    if (!Array.isArray(body.styles) || !body.styles.every((s: any) => typeof s === 'string')) {
+      return res.status(400).json({ error: 'styles must be an array of strings' });
+    }
+  }
+  
+  if (body.genre !== undefined && typeof body.genre !== 'string') {
+    return res.status(400).json({ error: 'genre must be a string' });
+  }
+  
+  if (body.format !== undefined && typeof body.format !== 'string') {
+    return res.status(400).json({ error: 'format must be a string' });
+  }
+  
+  if (body.fromCountry !== undefined && typeof body.fromCountry !== 'string') {
+    return res.status(400).json({ error: 'fromCountry must be a string' });
+  }
+  
+  if (body.artist !== undefined && typeof body.artist !== 'string') {
+    return res.status(400).json({ error: 'artist must be a string' });
+  }
+  
+  if (body.minYear !== undefined) {
+    if (typeof body.minYear !== 'number' || body.minYear < 1900 || body.minYear > 2100) {
+      return res.status(400).json({ error: 'minYear must be a number between 1900 and 2100' });
+    }
+  }
+  
+  if (body.maxYear !== undefined) {
+    if (typeof body.maxYear !== 'number' || body.maxYear < 1900 || body.maxYear > 2100) {
+      return res.status(400).json({ error: 'maxYear must be a number between 1900 and 2100' });
+    }
+  }
+  
+  if (body.currency !== undefined) {
+    if (typeof body.currency !== 'string' || body.currency.length !== 3) {
+      return res.status(400).json({ error: 'currency must be a 3-letter string' });
+    }
+  }
+  
+  if (body.condition !== undefined && typeof body.condition !== 'string') {
+    return res.status(400).json({ error: 'condition must be a string' });
+  }
+  
+  if (body.pageDelayMs !== undefined) {
+    if (typeof body.pageDelayMs !== 'number' || body.pageDelayMs < 100 || body.pageDelayMs > 10000) {
+      return res.status(400).json({ error: 'pageDelayMs must be a number between 100 and 10000' });
+    }
+    // Clamp to minimum 500ms to prevent hammering
+    body.pageDelayMs = Math.max(500, body.pageDelayMs);
+  }
+  
   // Disable automatic response timeout
   req.socket.setTimeout(0);
   req.socket.setNoDelay(true);
   req.socket.setKeepAlive(true);
   
-  const searchOptions: SearchOptions = req.body;
+  const searchOptions: SearchOptions = body;
   
   // Log search request
   console.log('\n=== New Search Request ===');
@@ -66,6 +126,20 @@ app.post('/api/search', (req, res) => {
       res.write(': heartbeat\n\n');
     }
   }, 15000);
+
+  // Set 10-minute timeout for the search
+  const timeoutHandle = setTimeout(() => {
+    if (!res.writableEnded) {
+      console.warn('[TIMEOUT] Search exceeded 10 minutes, terminating');
+      const errorEvent = `data: ${JSON.stringify({ 
+        type: 'error', 
+        message: 'Search timed out after 10 minutes' 
+      })}\n\n`;
+      res.write(errorEvent);
+      clearInterval(heartbeatInterval);
+      res.end();
+    }
+  }, 10 * 60 * 1000); // 10 minutes
 
   // Fire-and-forget async IIFE - route handler returns immediately, keeping connection open
   (async () => {
@@ -115,6 +189,9 @@ app.post('/api/search', (req, res) => {
       }
     } catch (error) {
       console.error('[ERROR] Error during search:', error);
+      if (error instanceof Error && error.stack) {
+        console.error('[ERROR] Stack trace:', error.stack);
+      }
       if (!res.writableEnded) {
         const errorEvent = `data: ${JSON.stringify({ 
           type: 'error', 
@@ -123,6 +200,7 @@ app.post('/api/search', (req, res) => {
         res.write(errorEvent);
       }
     } finally {
+      clearTimeout(timeoutHandle);
       clearInterval(heartbeatInterval);
       if (!res.writableEnded) {
         res.end();

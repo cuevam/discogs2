@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FilterSidebar } from './components/FilterSidebar';
 import { ProgressBar } from './components/ProgressBar';
 import { ResultsTable } from './components/ResultsTable';
@@ -12,10 +12,12 @@ function App() {
   const [progress, setProgress] = useState<ProgressUpdate | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [searchResetKey, setSearchResetKey] = useState(0);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
@@ -23,10 +25,19 @@ function App() {
   }, [darkMode]);
 
   const handleSearch = async (options: SearchOptions) => {
-    // Clear previous results
+    // Clear previous results and reset table filters
     setListings([]);
     setProgress(null);
     setIsSearching(true);
+    setSearchResetKey(prev => prev + 1);
+
+    // Abort any ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
 
     try {
       // Use fetch to POST the search options, then upgrade to EventSource
@@ -36,6 +47,7 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(options),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
@@ -109,6 +121,11 @@ function App() {
       setListings([...newListings]);
       setIsSearching(false);
     } catch (error) {
+      // Ignore abort errors (user cancelled)
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      
       console.error('Error during search:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setIsSearching(false);
@@ -116,6 +133,8 @@ function App() {
   };
 
   const handleCancel = () => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
     setIsSearching(false);
     setProgress(null);
   };
@@ -203,6 +222,7 @@ function App() {
           onToggleSidebar={() => setShowSidebar(!showSidebar)}
           darkMode={darkMode}
           onToggleDarkMode={() => setDarkMode(!darkMode)}
+          resetKey={searchResetKey}
         />
       </div>
     </div>

@@ -14,6 +14,33 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Retry helper with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelayMs: number = 2000
+): Promise<T> {
+  let lastError: any;
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      
+      if (attempt < maxRetries) {
+        const delayMs = baseDelayMs * Math.pow(2, attempt);
+        console.log(`[RETRY] Attempt ${attempt + 1} failed, retrying in ${delayMs}ms...`);
+        await sleep(delayMs);
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+/**
  * Generator function that yields listings as they are fetched
  */
 export async function* searchListings(
@@ -82,11 +109,20 @@ export async function* searchListings(
   // Debug: log the search params on first page
   console.log('[SEARCH] Search params:', JSON.stringify(searchParams, null, 2));
 
+  // Add delay BEFORE the first request to avoid 403 rate limiting
+  if (pageDelayMs > 0) {
+    await sleep(pageDelayMs);
+  }
+
   while (currentPage <= maxPages) {
     searchParams.page = currentPage;
 
     try {
-      const result = await DiscogsMarketplace.search(searchParams);
+      const result = await retryWithBackoff(
+        () => DiscogsMarketplace.search(searchParams),
+        3,
+        2000
+      );
 
       // Update max pages from response
       if (result.page && result.page.total) {
@@ -177,6 +213,33 @@ export async function* searchListings(
         await sleep(pageDelayMs);
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Handle rate limiting (403/429)
+      if (errorMessage.includes('403') || errorMessage.includes('429')) {
+        console.warn(`[RATE LIMIT] Encountered ${errorMessage.includes('403') ? '403' : '429'} on page ${currentPage}`);
+        
+        if (onProgress) {
+          onProgress({
+            currentPage,
+            totalPages: maxPages,
+            itemsLoaded: totalItemsYielded,
+            isComplete: false,
+            rateLimited: true
+          });
+        }
+        
+        // For now, break and return what we have
+        break;
+      }
+      
+      // For other errors, if we have some results (page > 1), log and break
+      if (currentPage > 1) {
+        console.error(`Error fetching page ${currentPage}:`, error);
+        break;
+      }
+      
+      // On page 1, throw because we have no results yet
       console.error(`Error fetching page ${currentPage}:`, error);
       throw error;
     }

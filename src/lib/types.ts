@@ -52,4 +52,5 @@ export interface ProgressUpdate {
   totalPages: number;
   itemsLoaded: number;
   isComplete: boolean;
+  rateLimited?: boolean;
 }

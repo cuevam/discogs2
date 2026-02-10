@@ -25,6 +25,7 @@ interface ResultsTableProps {
   onToggleSidebar: () => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
+  resetKey?: number;
 }
 
 const columnHelper = createColumnHelper<ListingData>();
@@ -185,7 +186,7 @@ function ColumnMenu({ header, onClose }: ColumnMenuProps) {
   );
 }
 
-export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, darkMode, onToggleDarkMode }: ResultsTableProps) {
+export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, darkMode, onToggleDarkMode, resetKey }: ResultsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     seller_name: false,
@@ -199,6 +200,14 @@ export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [showColumnPanel, setShowColumnPanel] = useState(false);
+
+  // Reset filters when a new search starts
+  useEffect(() => {
+    if (resetKey !== undefined) {
+      setColumnFilters([]);
+      setSorting([]);
+    }
+  }, [resetKey]);
 
   // Custom filter function that handles both 'contains' and 'exact' modes
   const customFilterFn = (row: any, columnId: string, filterValue: any) => {

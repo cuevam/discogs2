@@ -67,8 +67,8 @@ Filled in during Phase 2.
 | Exp | Date | Result | Decision taken |
 |---|---|---|---|
 | T1.3 spike | 2026-10-03 | Pass from WSL without `--with-deps`. `oren ambarchi` + Vinyl + `price,asc`: total 1935, 25/page, ~0.85 s per page with a shared browser; page 2 via cursor returned different items. Prices come in mixed currencies (first hit `2.16 GBP`). | Continue to Phase 2. |
-| T2.1 page cap | | | `MAX_PAGES = ` |
-| T2.2 styles | | missing: · AND/OR: | |
-| T2.3 countries | | | D4: |
-| T2.4 conditions/years | | | |
-| T2.5 cost/availability | | per page: ms · showUnavailable: | D2: |
+| T2.1 page cap | 2026-10-03 | Vinyl + Electronic, 250/page: 45 pages (11,250 items) with no cap, no duplicates, no 403/429. ~2.5 s per 250-item page with a shared browser. | `MAX_PAGES = 400` (safety cap only) |
+| T2.2 styles | 2026-10-03 | missing: none of the 27 quick styles. Single-ID styles combine as AND (Dub Techno 42,244 + Minimal 329,716 → 5,382). If any picked style has several IDs (Disco, Dub, Electro, Experimental, Industrial, New Wave, Noise, Trip Hop) the library switches to OR (Dub Techno + Dub → 437,655). Unknown style is silently dropped (total = unfiltered). | Validate names, throw on unknown. Accept the library's OR for multi-ID styles and log it. |
+| T2.3 countries | 2026-10-03 | With the library's original table, US/GB/DE/CZ/JP each return 100% matching `country.code` and Discogs names ("United States", "Czech Republic"). Our repair would keep "Czechia" for CZ and drop "Czech Republic", breaking both the filter and the code lookup. | D4: **remove the repair**, keep the name/code resolver. |
+| T2.4 conditions/years | 2026-10-03 | `Very Good Plus (VG+)` returns exactly VG+ (100/100). Years 1990–1999: 0 out of range, 0 null. `currencies: ['USD']` returns only USD prices. Release-ID filter exact. Seller IDs: endofanear 298854, Waterloorecords 3782589, breakawayrecords 1479923, each filter 100% that seller; unknown user → API 404. `label`/`catno` sort silently fall back to `listed` with the given direction. | Condition label unchanged. |
+| T2.5 cost/availability | 2026-10-03 | per page: ~0.5–1 s for 25 items, ~2.5 s for 250. showUnavailable default `true` returns unavailable items (98 of 250 on a Vinyl page; total 51.6M vs 39.5M with `false`). No 403/429 across 70 requests. | D5: `showUnavailable: false`. D2: keep 1 page / 3 s. |

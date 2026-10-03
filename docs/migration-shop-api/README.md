@@ -69,7 +69,7 @@ Tick as you go.
 
 - [x] **Phase 0** — T0.1 · T0.2
 - [x] **Phase 1** — T1.1 · T1.2 · T1.3 · **gate passed**
-- [ ] **Phase 2** — T2.1 · T2.2 · T2.3 · T2.4 · T2.5
+- [x] **Phase 2** — T2.1 · T2.2 · T2.3 · T2.4 · T2.5
 - [ ] **Phase 3** — T3.1 · T3.2 · T3.3 · T3.4 · T3.5 · T3.6 · T3.7
 - [ ] **Phase 4** — T4.1 · T4.2 · T4.3 · T4.4
 - [ ] **Phase 5** — T5.1 · T5.2 · T5.3 · T5.4

@@ -8,7 +8,7 @@ export interface SearchOptions {
   format?: string;
   fromCountry?: string;
   artist?: string;
-  /** Filter to a specific seller by their Discogs username. */
+  /** Filter to a specific seller by their Discogs username (resolved to an ID). */
   seller?: string;
   minYear?: number;
   maxYear?: number;
@@ -23,9 +23,8 @@ export interface SearchOptions {
    */
   maxItems?: number;
   /**
-   * Power-user "by ID" lookups (Discogs numeric IDs). These are mutually
-   * exclusive in the marketplace API — only the first provided (in the order
-   * release, master, label, artist) is applied.
+   * Power-user "by ID" lookups (Discogs numeric IDs). Only the first provided
+   * (in the order release, master, label, artist) is applied.
    */
   labelId?: number;
   masterId?: number;
@@ -35,18 +34,18 @@ export interface SearchOptions {
 
 /**
  * Result of a cheap "probe" (single page-1 request) used to preview the cost of
- * a full search before committing to it. Every number here is exact, reported
- * by Discogs — not estimated — except `estimatedTimeMsAll`, which is derived
- * from the rate limiter's spacing.
+ * a full search before committing to it. `totalItems` is exact, reported by
+ * Discogs; the page counts derive from it, and `estimatedTimeMsAll` from the
+ * rate limiter's spacing.
  */
 export interface EstimateResult {
-  /** Exact total listings matching the filters (Discogs `result.total`). */
+  /** Exact total listings matching the filters (Discogs `total`). */
   totalItems: number;
-  /** Results per page (Discogs `result.perPage`, normally 250). */
+  /** Results per page (250). */
   perPage: number;
-  /** Total pages reported by Discogs (Discogs `page.total`). */
+  /** Total pages needed for every listing (totalItems / perPage, rounded up). */
   totalPages: number;
-  /** Pages we would actually fetch, capped at Discogs' 400-page hard limit. */
+  /** Pages we would actually fetch, capped at our 400-page safety limit. */
   cappedPages: number;
   /** Listings we would actually fetch given the cap (cappedPages * perPage, clamped). */
   fetchableItems: number;
@@ -96,4 +95,6 @@ export interface ProgressUpdate {
   itemsLoaded: number;
   isComplete: boolean;
   rateLimited?: boolean;
+  /** The search stopped early because Discogs blocked a request (HTTP 403). */
+  blocked?: boolean;
 }

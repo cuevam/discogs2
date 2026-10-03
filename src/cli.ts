@@ -5,6 +5,7 @@
  */
 
 import { exportByStyle } from './exportStyle';
+import { closeBrowser } from './lib/browser';
 
 interface CliArgs {
   styles?: string[];  // Made optional
@@ -113,9 +114,10 @@ Optional:
   --minYear <number>    Minimum release year filter
   --maxYear <number>    Maximum release year filter
   --currency <code>     Currency code (e.g., "USD")
-  --sort <field,dir>    Sort order: listed, condition, artist, title, label, seller, price
+  --sort <field,dir>    Sort order: listed, condition, artist, title, year, seller, price
                         Direction: asc or desc [default: listed,desc]
                         Examples: price,asc | seller,desc | condition,desc
+                        (label and catno sorts are no longer supported by Discogs)
   --output <path>       Output CSV file path [default: exports/discogs_<name>_export.csv]
   --delayMs <number>    Delay between pages in milliseconds [default: 1000]
 
@@ -171,7 +173,10 @@ async function main(): Promise<void> {
     console.log('\n✅ Export completed successfully!');
   } catch (error) {
     console.error('\n❌ Export failed:', error instanceof Error ? error.message : error);
-    process.exit(1);
+    process.exitCode = 1;
+  } finally {
+    // The shared headless browser would otherwise keep the process alive.
+    await closeBrowser();
   }
 }
 

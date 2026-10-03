@@ -7,6 +7,7 @@ import cors from 'cors';
 import { searchListings, estimateSearch } from './lib/exporter';
 import { resolveSellerCountry } from './lib/countryFilter';
 import { SearchOptions, ListingData, ProgressUpdate } from './lib/types';
+import { DiscogsError, classifyError } from './lib/discogsError';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -229,9 +230,11 @@ app.post('/api/search', (req, res) => {
         console.error('[ERROR] Stack trace:', error.stack);
       }
       if (!res.writableEnded) {
-        const errorEvent = `data: ${JSON.stringify({ 
-          type: 'error', 
-          message: error instanceof Error ? error.message : 'Unknown error' 
+        const discogsError = classifyError(error);
+        const errorEvent = `data: ${JSON.stringify({
+          type: 'error',
+          message: discogsError.message,
+          kind: discogsError.kind,
         })}\n\n`;
         res.write(errorEvent);
       }
@@ -267,10 +270,21 @@ app.post('/api/estimate', (req, res) => {
       res.json(estimate);
     })
     .catch((error) => {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[ESTIMATE] Failed:', message);
-      const rateLimited = message.includes('403') || message.includes('429');
-      res.status(rateLimited ? 429 : 500).json({ error: message, rateLimited });
+      const discogsError: DiscogsError = classifyError(error);
+      console.error(`[ESTIMATE] Failed (${discogsError.kind}):`, discogsError.message);
+      const status = {
+        blocked: 503,
+        rateLimited: 429,
+        invalidInput: 400,
+        network: 502,
+        other: 500,
+      }[discogsError.kind];
+      res.status(status).json({
+        error: discogsError.message,
+        kind: discogsError.kind,
+        rateLimited: discogsError.kind === 'rateLimited',
+        blocked: discogsError.kind === 'blocked',
+      });
     });
 });
 

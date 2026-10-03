@@ -53,6 +53,9 @@ function App() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
+        if (data.blocked) {
+          throw new Error("Discogs is blocking automated searches right now. This is not a rate limit, so retrying won't help.");
+        }
         if (response.status === 429 || data.rateLimited) {
           throw new Error('Discogs is rate-limiting right now. Wait a minute and try again.');
         }
@@ -151,6 +154,11 @@ function App() {
                 const data = JSON.parse(line.slice(6));
 
                 if (data.type === 'progress') {
+                  if (data.blocked || data.rateLimited) {
+                    alert(data.blocked
+                      ? "Discogs started blocking requests, so the search stopped early. The results so far are kept."
+                      : 'Discogs is rate-limiting, so the search stopped early. The results so far are kept.');
+                  }
                   setProgress({
                     currentPage: data.currentPage,
                     totalPages: data.totalPages,

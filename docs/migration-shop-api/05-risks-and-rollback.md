@@ -7,8 +7,8 @@
 | R1 | Patchright also gets challenged from this machine or IP | Low–medium | Blocks the whole plan | Found at the T1.3 gate, before any real work. Try another network. If still blocked: fall back to the official-API seller mode (R1 fallback below). |
 | R2 | Chromium won't run on WSL (missing libraries, sandbox) | Low | Blocks | `--with-deps`; the library already launches with `chromiumSandbox: false`. |
 | R3 | Discogs/Cloudflare closes this workaround later | Medium over months | App breaks again | Pinned version plus clear "blocked" error. Watch the library repo; T7.1 path for updates. |
-| R4 | Unreleased commit changes before the npm release | Medium | Small API drift | Pinned SHA; T7.1 diffs before upgrading. |
-| R5 | `npm install` from git fails on `prepare` (husky) | Medium | Install friction | T1.1 tarball fallback. |
+| R4 | ~~Unreleased commit changes before the npm release~~ | — | — | Closed: 1.17.0 on npm is identical to `05c683a`. |
+| R5 | ~~`npm install` from git fails on `prepare`~~ | — | — | Closed: installed from npm. |
 | R6 | Filter values differ on the new API and a filter silently matches nothing or everything | Medium | Wrong results | Style validation (T3.3), smoke asserts S6–S11, experiments T2.2–T2.4. |
 | R7 | 3 requests per page trip a new Discogs rate limit | Low–medium | 429s on long searches | T2.5 measurement; D2; 429 is retried with backoff. |
 | R8 | Headless Chromium memory use in a long-running dev server | Low | Laptop slowdown | One shared browser, context per call (library), optional idle close (T3.1), soak test T5.4. |

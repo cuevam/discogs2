@@ -31,8 +31,9 @@ order. Phase gates are in the [README](README.md#order-of-execution).
 - **Depends on:** T0.2
 - **Files:** `package.json`, `package-lock.json`
 - **Steps:**
-  1. `npm install "github:KirianCaumes/Discogs-Marketplace-API-NodeJS#05c683a68b24f9aecf2018ae20020322ac345d14"`
-     Pin the full SHA, never a branch.
+  1. `npm install discogs-marketplace-api-nodejs@1.17.0 --save-exact`
+     (1.17.0, released 2026-10-01, is the same code as commit `05c683a`. Pin exactly:
+     upstream shipped breaking changes as a minor version.)
   2. npm runs the package's `prepare` script (`husky && npm run build`). If it fails:
      - `git clone` the repo into a scratch dir, `git checkout 05c683a`, `npm ci`, `npm run build`, `npm pack`;
      - copy the `.tgz` into `vendor/` and `npm install ./vendor/discogs-marketplace-api-nodejs-*.tgz`.

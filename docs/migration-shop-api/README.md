@@ -5,10 +5,10 @@ Move the app off the dead `sell/list` scraper and onto the new version of
 
 | | |
 |---|---|
-| **Status** | Planned — not started |
+| **Status** | In progress — Phase 1 gate passed 2026-10-03 |
 | **Written** | 2026-09-28 |
 | **Branch** | `migrate/shop-api-patchright` |
-| **Library target** | `KirianCaumes/Discogs-Marketplace-API-NodeJS` @ `05c683a` (unreleased; move to the npm release when it ships) |
+| **Library target** | `discogs-marketplace-api-nodejs@1.17.0` from npm (released 2026-10-01; same code as commit `05c683a`) |
 | **Estimated effort** | ~1 working day, most of it verification |
 
 ## Why
@@ -67,14 +67,14 @@ Phases run in order; tasks inside a phase run in the order listed.
 
 Tick as you go.
 
-- [ ] **Phase 0** — T0.1 · T0.2
-- [ ] **Phase 1** — T1.1 · T1.2 · T1.3 · **gate passed**
+- [x] **Phase 0** — T0.1 · T0.2
+- [x] **Phase 1** — T1.1 · T1.2 · T1.3 · **gate passed**
 - [ ] **Phase 2** — T2.1 · T2.2 · T2.3 · T2.4 · T2.5
 - [ ] **Phase 3** — T3.1 · T3.2 · T3.3 · T3.4 · T3.5 · T3.6 · T3.7
 - [ ] **Phase 4** — T4.1 · T4.2 · T4.3 · T4.4
 - [ ] **Phase 5** — T5.1 · T5.2 · T5.3 · T5.4
 - [ ] **Phase 6** — T6.1 · T6.2 · T6.3
-- [ ] **Phase 7** — T7.1
+- [x] **Phase 7** — T7.1 (not needed: 1.17.0 is on npm)
 
 ## Definition of done
 

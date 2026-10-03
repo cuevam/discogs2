@@ -66,7 +66,7 @@ Filled in during Phase 2.
 
 | Exp | Date | Result | Decision taken |
 |---|---|---|---|
-| T1.3 spike | | | |
+| T1.3 spike | 2026-10-03 | Pass from WSL without `--with-deps`. `oren ambarchi` + Vinyl + `price,asc`: total 1935, 25/page, ~0.85 s per page with a shared browser; page 2 via cursor returned different items. Prices come in mixed currencies (first hit `2.16 GBP`). | Continue to Phase 2. |
 | T2.1 page cap | | | `MAX_PAGES = ` |
 | T2.2 styles | | missing: · AND/OR: | |
 | T2.3 countries | | | D4: |

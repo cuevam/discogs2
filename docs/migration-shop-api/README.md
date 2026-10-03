@@ -5,7 +5,7 @@ Move the app off the dead `sell/list` scraper and onto the new version of
 
 | | |
 |---|---|
-| **Status** | In progress — Phase 1 gate passed 2026-10-03 |
+| **Status** | Implemented 2026-10-03 — waiting for the manual UI test (T5.2) |
 | **Written** | 2026-09-28 |
 | **Branch** | `migrate/shop-api-patchright` |
 | **Library target** | `discogs-marketplace-api-nodejs@1.17.0` from npm (released 2026-10-01; same code as commit `05c683a`) |
@@ -70,9 +70,9 @@ Tick as you go.
 - [x] **Phase 0** — T0.1 · T0.2
 - [x] **Phase 1** — T1.1 · T1.2 · T1.3 · **gate passed**
 - [x] **Phase 2** — T2.1 · T2.2 · T2.3 · T2.4 · T2.5
-- [ ] **Phase 3** — T3.1 · T3.2 · T3.3 · T3.4 · T3.5 · T3.6 · T3.7
-- [ ] **Phase 4** — T4.1 · T4.2 · T4.3 · T4.4
-- [ ] **Phase 5** — T5.1 · T5.2 · T5.3 · T5.4
+- [x] **Phase 3** — T3.1 · T3.2 · T3.3 · T3.4 · T3.5 · T3.6 · T3.7
+- [x] **Phase 4** — T4.1 · T4.2 · T4.3 · T4.4
+- [ ] **Phase 5** — T5.1 ✓ (17/17) · T5.2 · T5.3 ✓ (CLI) · T5.4
 - [ ] **Phase 6** — T6.1 · T6.2 · T6.3
 - [x] **Phase 7** — T7.1 (not needed: 1.17.0 is on npm)
 

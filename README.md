@@ -15,9 +15,14 @@ A personal CLI tool to mass export Discogs marketplace listings by music style.
 
 ```bash
 npm install
+npx patchright install chromium
 ```
 
-**Note:** This package requires Node.js >= 20.0.0 (you may see warnings on Node 18, but it should still work).
+The second command downloads the headless Chromium used to run searches (about 115 MB,
+stored under `~/.cache/ms-playwright`). If Chromium fails to start because of missing
+system libraries, run `npx patchright install --with-deps chromium` instead (needs sudo).
+
+**Note:** Requires Node.js >= 20.0.0.
 
 ## Usage
 
@@ -94,7 +99,7 @@ The exported CSV includes the following columns:
 
 ## How It Works
 
-1. **Search** - Uses `discogs-marketplace-api-nodejs` in legacy mode to search the Discogs marketplace
+1. **Search** - Uses `discogs-marketplace-api-nodejs` to query the Discogs shop API from a shared headless Chromium (Discogs blocks plain HTTP clients with a Cloudflare challenge). Seller usernames are turned into IDs through the official `api.discogs.com` API
 2. **Filter** - Applies style (required) and optional filters (genre, format, country, years)
 3. **Paginate** - Fetches up to 400 pages with 250 items per page (100,000 max listings)
 4. **Parse** - Extracts price, shipping, seller info, and release details from each listing
@@ -130,10 +135,13 @@ npm run export:style -- --style <style> [options]
 
 ## Limitations
 
-- Maximum 400 pages (Discogs API limitation)
+- Maximum 400 pages per search (our safety cap; 100,000 listings)
 - 250 items per page (maximum supported by Discogs)
-- Rate limiting required (default 1s delay between pages)
-- Requires Node.js >= 20.0.0 for the discogs-marketplace-api-nodejs package
+- Requests are paced to one page every ~3s
+- Sorting by label or catalog number is no longer supported by Discogs (falls back to newest listed)
+- Only listings that can be bought are returned (sold and on-hold items are hidden)
+- Discogs may tighten its bot protection again; a block shows a "Discogs is blocking" message
+- Requires Node.js >= 20.0.0 and Chromium (see Installation)
 
 ## License
 

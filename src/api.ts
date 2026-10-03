@@ -4,7 +4,8 @@
 
 import express from 'express';
 import cors from 'cors';
-import { searchListings } from './lib/exporter';
+import { searchListings, estimateSearch } from './lib/exporter';
+import { resolveSellerCountry } from './lib/countryFilter';
 import { SearchOptions, ListingData, ProgressUpdate } from './lib/types';
 
 const app = express();
@@ -46,12 +47,30 @@ app.post('/api/search', (req, res) => {
     return res.status(400).json({ error: 'format must be a string' });
   }
   
-  if (body.fromCountry !== undefined && typeof body.fromCountry !== 'string') {
-    return res.status(400).json({ error: 'fromCountry must be a string' });
+  if (body.fromCountry !== undefined) {
+    if (typeof body.fromCountry !== 'string') {
+      return res.status(400).json({ error: 'fromCountry must be a string' });
+    }
+    if (body.fromCountry.trim()) {
+      // Resolve to the canonical ISO code now, so an unrecognised country is a
+      // clean 400 rather than a silently-dropped filter that returns every
+      // country. Normalise so downstream always sees a valid code.
+      const code = resolveSellerCountry(body.fromCountry);
+      if (!code) {
+        return res.status(400).json({
+          error: `Unknown seller country "${body.fromCountry}". Use a country name (e.g. "United States") or its ISO code (e.g. "US").`,
+        });
+      }
+      body.fromCountry = code;
+    }
   }
   
   if (body.artist !== undefined && typeof body.artist !== 'string') {
     return res.status(400).json({ error: 'artist must be a string' });
+  }
+
+  if (body.seller !== undefined && typeof body.seller !== 'string') {
+    return res.status(400).json({ error: 'seller must be a string' });
   }
   
   if (body.minYear !== undefined) {
@@ -74,6 +93,20 @@ app.post('/api/search', (req, res) => {
   
   if (body.condition !== undefined && typeof body.condition !== 'string') {
     return res.status(400).json({ error: 'condition must be a string' });
+  }
+
+  if (body.maxItems !== undefined) {
+    if (typeof body.maxItems !== 'number' || body.maxItems < 1) {
+      return res.status(400).json({ error: 'maxItems must be a positive number' });
+    }
+  }
+
+  for (const idField of ['labelId', 'masterId', 'releaseId', 'artistId'] as const) {
+    if (body[idField] !== undefined) {
+      if (typeof body[idField] !== 'number' || body[idField] < 1 || !Number.isInteger(body[idField])) {
+        return res.status(400).json({ error: `${idField} must be a positive integer` });
+      }
+    }
   }
   
   if (body.pageDelayMs !== undefined) {
@@ -111,8 +144,11 @@ app.post('/api/search', (req, res) => {
   // Send a starting event immediately
   res.write(`data: ${JSON.stringify({ type: 'started' })}\n\n`);
 
-  // Track if client disconnects
-  req.on('close', () => {
+  // Track if client disconnects. NOTE: listen on `res`, not `req` — for a POST,
+  // req 'close' fires when the request body finishes uploading (immediately),
+  // which is not a disconnect. res 'close' fires when the connection actually ends.
+  res.on('close', () => {
+    if (res.writableFinished) return; // normal completion, not a disconnect
     clientDisconnected = true;
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     console.log(`[DISCONNECT] Client disconnected after ${duration}s (${totalItemsSent} items sent)`);
@@ -208,6 +244,34 @@ app.post('/api/search', (req, res) => {
       console.log('[END] Response ended');
     }
   })(); // IIFE ends here, route handler returns immediately
+});
+
+/**
+ * POST /api/estimate
+ * Cheap probe: fetches only page 1 to report exact totals and how much a full
+ * fetch would cost (requests + time) under the shared rate limiter. Returns the
+ * first page of items too, so the probe request is reused by the client.
+ */
+app.post('/api/estimate', (req, res) => {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    return res.status(400).json({ error: 'Request body must be a valid object' });
+  }
+
+  const searchOptions: SearchOptions = req.body;
+  console.log('\n=== Estimate Request ===');
+  console.log('Filters:', JSON.stringify(searchOptions));
+
+  estimateSearch(searchOptions)
+    .then((estimate) => {
+      console.log(`[ESTIMATE] ${estimate.totalItems} items, ${estimate.cappedPages} pages, ~${Math.round(estimate.estimatedTimeMsAll / 1000)}s`);
+      res.json(estimate);
+    })
+    .catch((error) => {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('[ESTIMATE] Failed:', message);
+      const rateLimited = message.includes('403') || message.includes('429');
+      res.status(rateLimited ? 429 : 500).json({ error: message, rateLimited });
+    });
 });
 
 /**

@@ -22,7 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
-    "discogs-marketplace-api-nodejs": "^1.14.4",
+    "discogs-marketplace-api-nodejs": "1.14.4",
     "express": "^5.1.0"
   },
   "devDependencies": {

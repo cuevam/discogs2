@@ -8,6 +8,7 @@ export interface SearchOptions {
   format?: string;
   fromCountry?: string;
   artist?: string;
+  seller?: string;
   minYear?: number;
   maxYear?: number;
   currency?: string;
@@ -15,6 +16,26 @@ export interface SearchOptions {
   formatDescription?: string;
   sort?: string;
   pageDelayMs?: number;
+  /** Cap on how many listings to fetch. Omit to fetch all (up to Discogs' limit). */
+  maxItems?: number;
+  /** Power-user "by ID" lookups. Mutually exclusive; first provided wins. */
+  labelId?: number;
+  masterId?: number;
+  releaseId?: number;
+  artistId?: number;
+}
+
+/** Response from POST /api/estimate — the cost preview for a search. */
+export interface EstimateResult {
+  totalItems: number;
+  perPage: number;
+  totalPages: number;
+  cappedPages: number;
+  fetchableItems: number;
+  requestsForAll: number;
+  estimatedTimeMsAll: number;
+  rateDescription: string;
+  firstPageItems: ListingData[];
 }
 
 export interface ListingData {

@@ -2,15 +2,22 @@ import { useState, useEffect, useRef } from 'react';
 import { FilterSidebar } from './components/FilterSidebar';
 import { ProgressBar } from './components/ProgressBar';
 import { ResultsTable } from './components/ResultsTable';
-import { SearchOptions, ListingData, ProgressUpdate } from './types';
+import { EstimateModal } from './components/EstimateModal';
+import { LoadingOverlay } from './components/LoadingOverlay';
+import { SearchOptions, ListingData, ProgressUpdate, EstimateResult } from './types';
 import './App.css';
 
-const API_URL = 'http://localhost:3001';
+// Use the same host the page was loaded from, so it works when opened from
+// another device on the LAN (e.g. a phone) instead of only on localhost.
+const API_URL = `${window.location.protocol}//${window.location.hostname}:3001`;
 
 function App() {
   const [listings, setListings] = useState<ListingData[]>([]);
   const [progress, setProgress] = useState<ProgressUpdate | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [isEstimating, setIsEstimating] = useState(false);
+  const [estimate, setEstimate] = useState<EstimateResult | null>(null);
+  const [pendingOptions, setPendingOptions] = useState<SearchOptions | null>(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [searchResetKey, setSearchResetKey] = useState(0);
   const [darkMode, setDarkMode] = useState(() => {
@@ -24,18 +31,73 @@ function App() {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
+  // Step 1: click Search -> cheap probe to preview the cost, then open the modal.
   const handleSearch = async (options: SearchOptions) => {
-    // Clear previous results and reset table filters
+    // Abort any ongoing stream and reset the view.
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    setListings([]);
+    setProgress(null);
+    setIsSearching(false);
+    setEstimate(null);
+    setIsEstimating(true);
+    setSearchResetKey(prev => prev + 1);
+
+    try {
+      const response = await fetch(`${API_URL}/api/estimate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 429 || data.rateLimited) {
+          throw new Error('Discogs is rate-limiting right now. Wait a minute and try again.');
+        }
+        throw new Error(data.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result: EstimateResult = await response.json();
+      setEstimate(result);
+      setPendingOptions(options);
+    } catch (error) {
+      console.error('Error during estimate:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsEstimating(false);
+    }
+  };
+
+  // Modal: fetch everything (paced by the server's rate limiter).
+  const handleFetchAll = () => {
+    const options = pendingOptions;
+    setEstimate(null);
+    if (options) runStream(options);
+  };
+
+  // Modal: take just the first page — already loaded by the probe, so instant.
+  const handleFirstPage = () => {
+    if (estimate) setListings(estimate.firstPageItems);
+    setEstimate(null);
+  };
+
+  const handleCloseEstimate = () => {
+    setEstimate(null);
+  };
+
+  // Step 2: stream the chosen search from the server via SSE.
+  const runStream = async (options: SearchOptions) => {
     setListings([]);
     setProgress(null);
     setIsSearching(true);
-    setSearchResetKey(prev => prev + 1);
 
     // Abort any ongoing request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-    
+
     // Create new AbortController for this request
     abortControllerRef.current = new AbortController();
 
@@ -212,7 +274,21 @@ function App() {
 
   return (
     <div className="app">
-      {showSidebar && <FilterSidebar onSearch={handleSearch} isSearching={isSearching} />}
+      {showSidebar && <FilterSidebar onSearch={handleSearch} isSearching={isSearching || isEstimating} />}
+      {isEstimating && (
+        <LoadingOverlay
+          message="Checking Discogs"
+          detail="Counting how many listings match your filters"
+        />
+      )}
+      {estimate && (
+        <EstimateModal
+          estimate={estimate}
+          onFetchAll={handleFetchAll}
+          onFirstPage={handleFirstPage}
+          onCancel={handleCloseEstimate}
+        />
+      )}
       <div className="main-content">
         {isSearching && <ProgressBar progress={progress} onCancel={handleCancel} />}
         <ResultsTable 

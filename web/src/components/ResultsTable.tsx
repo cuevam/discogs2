@@ -30,6 +30,25 @@ interface ResultsTableProps {
 
 const columnHelper = createColumnHelper<ListingData>();
 
+/** Columns that use a numeric min/max range filter instead of text contains/exact. */
+const NUMERIC_COLUMNS = new Set(['price', 'shipping', 'total', 'have', 'want', 'seller_score']);
+
+/**
+ * Range filter for numeric columns. filterValue is { min?, max? }.
+ * A row passes when its value is >= min (if set) and <= max (if set).
+ * Rows with no value are excluded once any bound is active.
+ */
+const numericRangeFilterFn = (row: any, columnId: string, filterValue: any) => {
+  if (!filterValue || (filterValue.min == null && filterValue.max == null)) return true;
+  const raw = row.getValue(columnId);
+  if (raw === null || raw === undefined || raw === '') return false;
+  const num = typeof raw === 'number' ? raw : parseFloat(raw);
+  if (isNaN(num)) return false;
+  if (filterValue.min != null && num < filterValue.min) return false;
+  if (filterValue.max != null && num > filterValue.max) return false;
+  return true;
+};
+
 interface ColumnMenuProps {
   header: Header<ListingData, unknown>;
   onClose: () => void;
@@ -38,6 +57,17 @@ interface ColumnMenuProps {
 function ColumnMenu({ header, onClose }: ColumnMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const currentFilter = header.column.getFilterValue() as any;
+  const isNumeric = NUMERIC_COLUMNS.has(header.column.id);
+  const [minVal, setMinVal] = useState(
+    isNumeric && typeof currentFilter === 'object' && currentFilter?.min != null
+      ? String(currentFilter.min)
+      : ''
+  );
+  const [maxVal, setMaxVal] = useState(
+    isNumeric && typeof currentFilter === 'object' && currentFilter?.max != null
+      ? String(currentFilter.max)
+      : ''
+  );
   const [filterValue, setFilterValue] = useState(
     typeof currentFilter === 'object' && currentFilter?.value 
       ? currentFilter.value 
@@ -62,6 +92,31 @@ function ColumnMenu({ header, onClose }: ColumnMenuProps) {
       setFilterMode('contains');
     }
   }, [currentFilter]);
+
+  // Sync numeric min/max when the filter changes externally (e.g. cleared on reset)
+  useEffect(() => {
+    if (!isNumeric) return;
+    if (currentFilter && typeof currentFilter === 'object') {
+      setMinVal(currentFilter.min != null ? String(currentFilter.min) : '');
+      setMaxVal(currentFilter.max != null ? String(currentFilter.max) : '');
+    } else {
+      setMinVal('');
+      setMaxVal('');
+    }
+  }, [currentFilter, isNumeric]);
+
+  const applyRange = (min: string, max: string) => {
+    const mn = min.trim() === '' ? undefined : Number(min);
+    const mx = max.trim() === '' ? undefined : Number(max);
+    if ((mn == null || isNaN(mn)) && (mx == null || isNaN(mx))) {
+      header.column.setFilterValue(undefined);
+    } else {
+      header.column.setFilterValue({
+        min: mn != null && !isNaN(mn) ? mn : undefined,
+        max: mx != null && !isNaN(mx) ? mx : undefined,
+      });
+    }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -100,38 +155,71 @@ function ColumnMenu({ header, onClose }: ColumnMenuProps) {
     <div className="column-menu" ref={menuRef}>
       {canFilter && (
         <>
-          <div className="filter-input-container">
-            <input
-              type="text"
-              placeholder="Filter..."
-              value={filterValue}
-              onChange={(e) => handleFilterChange(e.target.value)}
-              onClick={(e) => e.stopPropagation()}
-              className="filter-input"
-            />
-            <div className="filter-mode-toggle">
-              <label className="filter-mode-option">
+          {isNumeric ? (
+            <div className="filter-input-container">
+              <div className="range-inputs">
                 <input
-                  type="radio"
-                  checked={filterMode === 'contains'}
-                  onChange={() => handleModeChange('contains')}
+                  type="number"
+                  placeholder="Min"
+                  value={minVal}
+                  onChange={(e) => {
+                    setMinVal(e.target.value);
+                    applyRange(e.target.value, maxVal);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="filter-input range-input"
                 />
-                <span>Contains</span>
-              </label>
-              <label className="filter-mode-option">
+                <span className="range-sep">–</span>
                 <input
-                  type="radio"
-                  checked={filterMode === 'exact'}
-                  onChange={() => handleModeChange('exact')}
+                  type="number"
+                  placeholder="Max"
+                  value={maxVal}
+                  onChange={(e) => {
+                    setMaxVal(e.target.value);
+                    applyRange(minVal, e.target.value);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="filter-input range-input"
                 />
-                <span>Exact match</span>
-              </label>
+              </div>
+              <div className="range-hint">Leave a box empty for no limit</div>
             </div>
-          </div>
+          ) : (
+            <div className="filter-input-container">
+              <input
+                type="text"
+                placeholder="Filter..."
+                value={filterValue}
+                onChange={(e) => handleFilterChange(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                className="filter-input"
+              />
+              <div className="filter-mode-toggle">
+                <label className="filter-mode-option">
+                  <input
+                    type="radio"
+                    checked={filterMode === 'contains'}
+                    onChange={() => handleModeChange('contains')}
+                  />
+                  <span>Contains</span>
+                </label>
+                <label className="filter-mode-option">
+                  <input
+                    type="radio"
+                    checked={filterMode === 'exact'}
+                    onChange={() => handleModeChange('exact')}
+                  />
+                  <span>Exact match</span>
+                </label>
+              </div>
+            </div>
+          )}
           {isFiltered && (
             <button
               onClick={() => {
                 setFilterValue('');
+                setMinVal('');
+                setMaxVal('');
                 header.column.setFilterValue(undefined);
               }}
             >
@@ -186,10 +274,11 @@ function ColumnMenu({ header, onClose }: ColumnMenuProps) {
   );
 }
 
+const DEFAULT_SORTING: SortingState = [{ id: 'total', desc: false }];
+
 export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, darkMode, onToggleDarkMode, resetKey }: ResultsTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    seller_name: false,
     seller_score: false,
     year: false,
     decade: false,
@@ -205,7 +294,7 @@ export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, 
   useEffect(() => {
     if (resetKey !== undefined) {
       setColumnFilters([]);
-      setSorting([]);
+      setSorting(DEFAULT_SORTING);
     }
   }, [resetKey]);
 
@@ -289,6 +378,7 @@ export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, 
       columnHelper.accessor('price', {
         header: 'Price',
         size: 80,
+        filterFn: numericRangeFilterFn,
         cell: (info) => {
           const value = info.getValue();
           return value !== null ? value.toFixed(2) : '-';
@@ -297,6 +387,7 @@ export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, 
       columnHelper.accessor('shipping', {
         header: 'Shipping',
         size: 80,
+        filterFn: numericRangeFilterFn,
         cell: (info) => {
           const value = info.getValue();
           return value !== null ? value.toFixed(2) : '-';
@@ -305,6 +396,7 @@ export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, 
       columnHelper.accessor('total', {
         header: 'Total',
         size: 80,
+        filterFn: numericRangeFilterFn,
         cell: (info) => {
           const value = info.getValue();
           if (value === null || value === undefined) return '-';
@@ -320,20 +412,23 @@ export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, 
       columnHelper.accessor('have', {
         header: 'Have',
         size: 70,
+        filterFn: numericRangeFilterFn,
       }),
       columnHelper.accessor('want', {
         header: 'Want',
         size: 70,
+        filterFn: numericRangeFilterFn,
       }),
       columnHelper.accessor('seller_name', {
         header: 'Seller',
         size: 150,
         filterFn: customFilterFn,
         cell: (info) => (
-          <a 
-            href={info.row.original.seller_url} 
-            target="_blank" 
+          <a
+            href={info.row.original.seller_url}
+            target="_blank"
             rel="noopener noreferrer"
+            className="seller-link"
           >
             {info.getValue()}
           </a>
@@ -342,6 +437,7 @@ export function ResultsTable({ data, onExportCSV, showSidebar, onToggleSidebar, 
       columnHelper.accessor('seller_score', {
         header: 'Score',
         size: 70,
+        filterFn: numericRangeFilterFn,
         cell: (info) => {
           const value = info.getValue();
           if (value === null || value === undefined) return '-';

@@ -437,6 +437,28 @@ th:hover .resizer {
   box-shadow: 0 0 0 3px var(--shadow-sm);
 }
 
+.range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.range-sep {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.range-hint {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+}
+
 .filter-mode-toggle {
   display: flex;
   gap: 8px;
@@ -553,13 +575,15 @@ th:hover .resizer {
   border-radius: 8px;
 }
 
-.title-link {
+.title-link,
+.seller-link {
   color: #2196F3;
   text-decoration: none;
   font-weight: 500;
 }
 
-.title-link:hover {
+.title-link:hover,
+.seller-link:hover {
   text-decoration: underline;
 }
 

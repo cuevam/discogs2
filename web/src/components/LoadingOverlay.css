@@ -1,0 +1,139 @@
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+  animation: loading-fade-in 0.15s ease-out;
+}
+
+.loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px var(--shadow-md);
+  padding: 36px 44px;
+  color: var(--text-primary);
+}
+
+/* --- Spinning vinyl record --- */
+.vinyl {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  /* Concentric grooves + a rotating sheen so the spin actually reads. */
+  background:
+    conic-gradient(
+      from 0deg,
+      rgba(255, 255, 255, 0.16) 0deg,
+      rgba(255, 255, 255, 0) 55deg,
+      rgba(255, 255, 255, 0) 300deg,
+      rgba(255, 255, 255, 0.16) 360deg
+    ),
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.07) 0 1px,
+      rgba(0, 0, 0, 0) 1px 4px
+    ),
+    radial-gradient(circle at 50% 50%, #2a2a2a 0%, #050505 70%);
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  animation: vinyl-spin 1.5s linear infinite;
+}
+
+.vinyl-label {
+  position: absolute;
+  inset: 33px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+/* A small off-centre mark on the label reinforces the rotation. */
+.vinyl-label::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateX(-50%);
+}
+
+/* Centre spindle hole. */
+.vinyl-label::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+}
+
+.loading-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.loading-message {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Animated ellipsis after the message. */
+.loading-message::after {
+  content: '';
+  animation: loading-dots 1.4s steps(4, end) infinite;
+}
+
+.loading-detail {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+@keyframes vinyl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-dots {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: ''; }
+}
+
+@keyframes loading-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vinyl {
+    animation-duration: 3s;
+  }
+  .loading-message::after {
+    animation: none;
+    content: '…';
+  }
+  .loading-overlay {
+    animation: none;
+  }
+}

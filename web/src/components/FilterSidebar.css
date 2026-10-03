@@ -1,8 +1,9 @@
 .filter-sidebar {
   width: 300px;
   height: 100vh;
-  overflow-y: auto;
-  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background-color: var(--bg-tertiary);
   border-right: 1px solid var(--border-light);
   position: relative;
@@ -21,7 +22,19 @@
 .filter-sidebar form {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Scrollable filter area — lets every field (incl. Advanced) scroll clear of the footer. */
+.filter-scroll {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 20px;
 }
 
 .filter-group {
@@ -61,6 +74,195 @@
   background-color: var(--bg-secondary);
   cursor: not-allowed;
   color: var(--text-tertiary);
+}
+
+/* Discogs IDs and years are exact values — the number spinner arrows just add
+   clutter and get in the way of the clear button, so hide them. */
+.filter-group input[type='number']::-webkit-outer-spin-button,
+.filter-group input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.filter-group input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Input + clear (×) button. */
+.input-clearable {
+  position: relative;
+  display: block;
+}
+
+.input-clearable input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 34px;
+}
+
+.input-clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--text-tertiary);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.input-clear:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+/* --- Quick-pick style chips --- */
+.style-chips-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+.style-chips-toggle:hover {
+  color: var(--text-primary);
+}
+
+.style-chips-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.style-chips-body {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+
+.style-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.style-chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.style-chip:hover:not(:disabled) {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.style-chip.active {
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+
+.style-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.filter-advanced-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px 0 0;
+  border: none;
+  border-top: 1px solid var(--border-light);
+  background: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  text-align: left;
+}
+
+.filter-advanced-toggle:hover {
+  color: var(--text-primary);
+}
+
+.advanced-caret {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.advanced-caret.open {
+  transform: rotate(90deg);
+}
+
+.filter-advanced-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filter-advanced-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+/* Fixed footer bar: always visible below the scrolling filters, constant size. */
+.search-footer {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  background-color: var(--bg-tertiary);
+  border-top: 1px solid var(--border-light);
+}
+
+.search-footer .search-button {
+  width: 100%;
+  margin-top: 0;
 }
 
 .search-button {

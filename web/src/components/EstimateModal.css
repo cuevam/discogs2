@@ -1,0 +1,145 @@
+.estimate-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.estimate-modal {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px var(--shadow-md);
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  color: var(--text-primary);
+}
+
+.estimate-title {
+  margin: 0 0 20px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.estimate-empty {
+  color: var(--text-secondary);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.estimate-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.estimate-count {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.estimate-count-label {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.estimate-math {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.estimate-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 0.9rem;
+}
+
+.estimate-row span {
+  color: var(--text-secondary);
+}
+
+.estimate-row strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.estimate-rate {
+  border-top: 1px solid var(--border-lighter);
+  margin-top: 6px;
+  padding-top: 12px;
+  font-size: 0.8rem;
+}
+
+.estimate-rate span {
+  color: var(--text-tertiary);
+}
+
+.estimate-note {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-lighter);
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+.estimate-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estimate-btn {
+  padding: 13px 18px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.estimate-btn-primary {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.estimate-btn-primary:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.estimate-btn-secondary {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.estimate-btn-secondary:hover {
+  background: var(--hover-bg);
+}
+
+.estimate-btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.estimate-btn-ghost:hover {
+  background: var(--hover-bg-light);
+  color: var(--text-primary);
+}
